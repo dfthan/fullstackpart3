@@ -1,7 +1,11 @@
 const express = require('express')
+var morgan = require('morgan')
 const app = express()
 
 app.use(express.json())
+morgan.token("post",(req,res) => JSON.stringify(req.body))
+// Tiny ei enään käytössä, mutta oletan että 3.8 saa tehdä näin
+app.use(morgan(":method :url :status :res[content-length] - :response-time ms :post"))
 
 let persons = [
     {
@@ -17,12 +21,12 @@ let persons = [
     {
         id: 3,
         name: "Dan Abramov",
-        number:  "12-43-234345"
+        number: "12-43-234345"
     },
     {
         id: 4,
         name: "Mary Poppendick",
-        number:  "39-23-6423122"
+        number: "39-23-6423122"
     },
     {
         id: 5,
@@ -35,7 +39,7 @@ app.get('/', (req, res) => {
     res.send('<h1>Hello World!</h1>')
 })
 
-app.get("/info", (req,res) => {
+app.get("/info", (req, res) => {
     console.log(Date.now())
     res.send(`Phonebook has info for ${persons.length} people <p> ${Date()} </p>`)
 })
@@ -56,7 +60,7 @@ app.get("/api/persons/:id", (req, res) => {
     }
 })
 
-app.delete("/api/persons/:id", (req,res) => {
+app.delete("/api/persons/:id", (req, res) => {
     const id = Number(req.params.id)
     persons = persons.find(person => person.id !== id)
     res.status(204).end()
@@ -64,8 +68,8 @@ app.delete("/api/persons/:id", (req,res) => {
 
 
 
-app.post("/api/persons", (req,res) => {
-    console.log("body",req.body)
+app.post("/api/persons", (req, res) => {
+    console.log("body", req.body)
 
     if (!req.body["name"] || !req.body["number"]) {
         return res.status(400).json({
@@ -80,12 +84,13 @@ app.post("/api/persons", (req,res) => {
     }
 
     const person = {
-        id: Math.floor(Math.random()*10000),
+        id: Math.floor(Math.random() * 10000),
         name: req.body["name"],
         number: req.body["number"],
     }
 
-    persons = [...persons,person]
+    persons = [...persons, person]
+    res.send("ok")
 })
 
 const PORT = 3001
