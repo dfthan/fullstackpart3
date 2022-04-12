@@ -1,9 +1,11 @@
 const express = require('express')
+const cors = require('cors')
 var morgan = require('morgan')
 const app = express()
 
 app.use(express.json())
-morgan.token("post",(req,res) => JSON.stringify(req.body))
+app.use(cors())
+morgan.token("post", (req, res) => JSON.stringify(req.body))
 // Tiny ei enään käytössä, mutta oletan että 3.8 saa tehdä näin
 app.use(morgan(":method :url :status :res[content-length] - :response-time ms :post"))
 
@@ -62,38 +64,40 @@ app.get("/api/persons/:id", (req, res) => {
 
 app.delete("/api/persons/:id", (req, res) => {
     const id = Number(req.params.id)
-    persons = persons.find(person => person.id !== id)
+    persons = persons.filter(person => person.id !== id)
+    console.log(persons.filter(person => person.id))
     res.status(204).end()
+
 })
 
 
 
 app.post("/api/persons", (req, res) => {
-    console.log("body", req.body)
+    //console.log("body", req.body)
 
     if (!req.body["name"] || !req.body["number"]) {
         return res.status(400).json({
             error: "Name or number missing!"
         })
     }
-
-    if (persons.find(person => person.name === req.body["name"])) {
+    else if (persons.find(person => person.name === req.body["name"])) {
         return res.status(400).json({
             error: "Name must be unique!"
         })
     }
+
 
     const person = {
         id: Math.floor(Math.random() * 10000),
         name: req.body["name"],
         number: req.body["number"],
     }
-
     persons = [...persons, person]
-    res.send("ok")
+    res.json(person)
+
 })
 
-const PORT = 3001
+const PORT = process.env.PORT ||3001
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}/api/persons`)
 })
