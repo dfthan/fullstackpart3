@@ -1,42 +1,17 @@
 const express = require('express')
 const cors = require('cors')
 var morgan = require('morgan')
+require("dotenv").config()
 const app = express()
+const Person = require("./models/person")
+const { response } = require('express')
 
 app.use(express.static('build'))
 app.use(express.json())
 app.use(cors())
 morgan.token("post", (req, res) => JSON.stringify(req.body))
-// Tiny ei enään käytössä, mutta oletan että 3.8 saa tehdä näin
+// Tiny ei enään käytössä, mutta oletan että tehtävässä 3.8 saa tehdä näin
 app.use(morgan(":method :url :status :res[content-length] - :response-time ms :post"))
-
-let persons = [
-    {
-        id: 1,
-        name: "Arto Hellas",
-        number: "040-123456"
-    },
-    {
-        id: 2,
-        name: "Ada Lovelace",
-        number: "39-44-5323523"
-    },
-    {
-        id: 3,
-        name: "Dan Abramov",
-        number: "12-43-234345"
-    },
-    {
-        id: 4,
-        name: "Mary Poppendick",
-        number: "39-23-6423122"
-    },
-    {
-        id: 5,
-        name: "test",
-        number: "123"
-    },
-]
 
 app.get('/', (req, res) => {
     res.send('<h1>Hello World!</h1>')
@@ -48,30 +23,28 @@ app.get("/info", (req, res) => {
 })
 
 app.get('/api/persons', (req, res) => {
-    res.json(persons)
+    Person.find()
+        .then(persons => {
+            res.json(persons)
+        })
 })
 
 app.get("/api/persons/:id", (req, res) => {
-    const id = Number(req.params.id)
-    const returnablePerson = persons.find(person => person.id === id)
-    //console.log("palautus",returnablePerson)
-    if (returnablePerson) {
-        res.json(returnablePerson)
-    }
-    else {
-        res.status(404).end()
-    }
-})
-
-app.delete("/api/persons/:id", (req, res) => {
-    const id = Number(req.params.id)
-    persons = persons.filter(person => person.id !== id)
-    console.log(persons.filter(person => person.id))
-    res.status(204).end()
+    Person.findById(req.params.id)
+        .then(person => {
+            res.json(person)
+        })
 
 })
 
+app.delete("/api/persons/:id", (req, res, next) => {
+    Person.findById(req.params.id) 
+        .then(() => {
+            response.status(204).end()
+        })
+        .catch(error => next(error))
 
+})
 
 app.post("/api/persons", (req, res) => {
     //console.log("body", req.body)
@@ -81,24 +54,41 @@ app.post("/api/persons", (req, res) => {
             error: "Name or number missing!"
         })
     }
+    /*
     else if (persons.find(person => person.name === req.body["name"])) {
         return res.status(400).json({
             error: "Name must be unique!"
         })
     }
+    */
 
-
-    const person = {
-        id: Math.floor(Math.random() * 10000),
+    const person = new Person({
         name: req.body["name"],
         number: req.body["number"],
-    }
-    persons = [...persons, person]
-    res.json(person)
+    })
+
+    person.save()
+        .then(saved => {
+            res.json(saved)
+        })
 
 })
 
-const PORT = process.env.PORT ||3001
+app.put("/api/persons/:id", (req,res,next) => {
+    const person = {
+        name: req.body["name"],
+        number: req.body["number"],
+    }
+
+    Person.findByIdAndUpdate(req.params.id,person, {new:true})
+        .then(updated => {
+            res.json(updated)
+        })
+        .catch(error => next(error))
+})
+
+const PORT = process.env.PORT
 app.listen(PORT, () => {
+    console.log(PORT)
     console.log(`Server running on http://localhost:${PORT}/api/persons`)
 })
