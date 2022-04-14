@@ -4,7 +4,6 @@ var morgan = require('morgan')
 require("dotenv").config()
 const app = express()
 const Person = require("./models/person")
-const { response } = require('express')
 
 app.use(express.static('build'))
 app.use(express.json())
@@ -80,7 +79,7 @@ app.put("/api/persons/:id", (req, res, next) => {
         number: req.body["number"],
     }
 
-    Person.findByIdAndUpdate(req.params.id, person, { new: true, runValidators: true, context:"query" })
+    Person.findByIdAndUpdate(req.params.id, person, { new: true, runValidators: true, context: "query" })
         .then(updated => {
             res.json(updated)
         })
